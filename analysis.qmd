@@ -1,5 +1,6 @@
 ---
 # title: "Manuscript Analysis"
+# author: _"Anthony Muñoz Vilca"
 format:
   html:
     toc: true
@@ -28,26 +29,26 @@ source('https://inkaverse.com/setup.r')
 # Data import
 
 ```{r}
-gs <- "https://docs.google.com/spreadsheets/d/1QziIXGOwb8cl3GaARJq6Ez6aU7vND_UHKJnFcAKx0VI/edit?gid=800931632#gid=800931632" %>% 
+gs <- "https://docs.google.com/spreadsheets/d/1nhsWjlUSZ3pRI3AxDg4MsXkxKMixxkaHPeB_lV3cG30/edit?gid=1278491723#gid=1278491723" %>% 
   as_sheets_id()
 
 fb <- gs %>% 
-  range_read(ss = .,sheet = "pisum") %>% 
-  mutate(across(c(1:cols), ~ as.factor(.))) 
+  range_read(ss = .,sheet = "cerveza") %>% 
+  mutate(across(c(1:rep), ~ as.factor(.))) 
 
 fb %>% str()
 ```
 
 # Modelo
 
-$$pescpo = Bloque + I + PEG + I*PEG$$
+$$alcohol = P + T + t + P*T + P*t +T*t + P*T*t$$
 
 ```{r}
-av  <-  aov(peso ~ block + Inoculant*peg, fb)
+av  <-  aov(alcohol ~ proporcion*temperatura*tiempo, fb)
 
 anova(av)
 
-mc <- emmeans(av, ~ Inoculant*peg) %>% 
+mc <- emmeans(av, ~ temperatura*tiempo) %>% 
   as.data.frame()
 
 mc
@@ -55,8 +56,8 @@ mc
 plot_smr(mc
          , type = "bar"
          , y = "emmean"
-         , x = "Inoculant"
-         , group = "peg")
+         , x = "temperatura"
+         , group = "tiempo")
 
 ```
 
@@ -66,11 +67,10 @@ plot_smr(mc
 library(factoextra)
 
 dtx <- fb %>%
-  mutate(ger = ger_7/seeds * 100) %>% 
-  dplyr::select(c("Inoculant", "peg", "peso", "biomasa", "ger")) %>%
-  group_by(Inoculant, peg) %>% 
+  dplyr::select(c("proporcion", "temperatura", "tiempo", "brix", "ph", "densidad", "alcohol", "acidez")) %>%
+  group_by(proporcion, temperatura, tiempo) %>% 
   summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE))) %>% 
-  unite("rowname", c("Inoculant", "peg"), remove = F, sep = "-") %>% 
+  unite("rowname", c("proporcion", "temperatura", "tiempo"), remove = F, sep = "-") %>% 
   column_to_rownames() %>% 
   as.data.frame()
 
@@ -79,7 +79,7 @@ str(dtx)
 mv <- dtx %>% 
   PCA(scale.unit = T
       , graph = F
-      , quali.sup = c(1, 2))
+      , quali.sup = c(1, 2, 3))
 
 var <- mv %>% 
   plot.PCA(choix = c("var"), cex=0.7)
@@ -134,16 +134,4 @@ plot %>% include_graphics()
 
 # References
 
-Broman, K. W., & Woo, K. H. (2017). Data organization in spreadsheets. The American Statistician, 72(1), 2–10. https://doi.org/10.1080/00031305.2017.1375989
-
-Zuur, A. F., Ieno, E. N., & Elphick, C. S. (2009). A protocol for data exploration to avoid common statistical problems. Methods in Ecology and Evolution, 1(1), 3–14. https://doi.org/10.1111/j.2041-210x.2009.00001.x
-
-Francoishusson. (2017, July 13). PCA course using FactoMineR | R-bloggers. R-bloggers. https://www.r-bloggers.com/2017/07/pca-course-using-factominer/
-
-Kozak, M., & Piepho, H. (2017). What’s normal anyway? Residual plots are more telling than significance tests when checking ANOVA assumptions. Journal of Agronomy and Crop Science, 204(1), 86–98. https://doi.org/10.1111/jac.12220
-
-Tanaka, E., & Hui, F. K. C. (2019). Symbolic formulae for linear mixed models. In Communications in computer and information science (pp. 3–21). https://doi.org/10.1007/978-981-15-1960-4_1
-
-Schielzeth, H., Dingemanse, N. J., Nakagawa, S., Westneat, D. F., Allegue, H., Teplitsky, C., Réale, D., Dochtermann, N. A., Garamszegi, L. Z., & Araya‐Ajoy, Y. G. (2020). Robustness of linear mixed‐effects models to violations of distributional assumptions. Methods in Ecology and Evolution, 11(9), 1141–1152. https://doi.org/10.1111/2041-210x.13434
-
-Jambor, H. K. (2025). A checklist for designing and improving the visualization of scientific data. Nature Cell Biology, 27(6), 879–883. https://doi.org/10.1038/s41556-025-01684-z
+Díaz Aranda, D. L., & Lucero Cueva, L. J. (2022). Cerveza artesanal elaborado con maíz morado (Zea mays) y quinua (Chenopodium quinoa) tipo malteado, tostados a diferentes tiempos y temperaturas [Tesis de pregrado, Universidad Nacional de Jaén]. https://repositorio.unj.edu.pe/handle/UNJ/447
