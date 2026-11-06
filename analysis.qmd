@@ -40,7 +40,7 @@ fb %>% str()
 
 # Modelo
 
-$$peso = Bloque + I + PEG + I*PEG$$
+$$pescpo = Bloque + I + PEG + I*PEG$$
 
 ```{r}
 av  <-  aov(peso ~ block + Inoculant*peg, fb)
